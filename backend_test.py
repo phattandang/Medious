@@ -338,12 +338,13 @@ class MediousAuthTester:
         
         try:
             headers = {"Authorization": f"Bearer {self.auth_token}"}
-            payload = {
+            # Use query parameters as the endpoint expects
+            params = {
                 "name": "Updated Test User",
                 "avatar": "https://example.com/new-avatar.jpg"
             }
             
-            response = requests.put(f"{self.base_url}/users/profile", json=payload, headers=headers, timeout=10)
+            response = requests.put(f"{self.base_url}/users/profile", params=params, headers=headers, timeout=10)
             
             if response.status_code == 200:
                 data = response.json()
