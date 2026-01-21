@@ -1,22 +1,29 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Medious",
+    "slug": "medious",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontend",
+    "scheme": "medious",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "extra": {
+      "supabaseUrl": "https://yqtyptjtqgqxsczfwwsk.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxdHlwdGp0cWdxeHNjemZ3d3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MDIxMzgsImV4cCI6MjA4NDE3ODEzOH0.Hk6d_QMnojaRJXdUUGSuaq-mgzLjACKJoO5fwTgzcH8",
+      "backendUrl": "https://social-fusion-109.preview.emergentagent.com"
+    },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.medious.app"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#000"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.medious.app"
     },
     "web": {
       "bundler": "metro",
