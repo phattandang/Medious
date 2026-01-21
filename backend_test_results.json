@@ -1,0 +1,122 @@
+{
+  "summary": {
+    "passed": 13,
+    "failed": 2,
+    "total": 15
+  },
+  "results": [
+    {
+      "test": "API Health Check",
+      "success": true,
+      "message": "API is accessible",
+      "timestamp": "2026-01-21T03:42:41.996192",
+      "details": null
+    },
+    {
+      "test": "User Registration (Valid)",
+      "success": true,
+      "message": "User registered successfully",
+      "timestamp": "2026-01-21T03:42:42.759761",
+      "details": null
+    },
+    {
+      "test": "User Registration (Duplicate)",
+      "success": true,
+      "message": "Duplicate email correctly rejected",
+      "timestamp": "2026-01-21T03:42:43.299501",
+      "details": null
+    },
+    {
+      "test": "User Login (Valid)",
+      "success": true,
+      "message": "Login successful",
+      "timestamp": "2026-01-21T03:42:44.063576",
+      "details": null
+    },
+    {
+      "test": "User Login (Invalid Password)",
+      "success": true,
+      "message": "Invalid password correctly rejected",
+      "timestamp": "2026-01-21T03:42:44.825301",
+      "details": null
+    },
+    {
+      "test": "User Login (Non-existent Email)",
+      "success": true,
+      "message": "Non-existent email correctly rejected",
+      "timestamp": "2026-01-21T03:42:45.361027",
+      "details": null
+    },
+    {
+      "test": "Token Verification (Valid)",
+      "success": true,
+      "message": "Token verification successful",
+      "timestamp": "2026-01-21T03:42:45.911551",
+      "details": null
+    },
+    {
+      "test": "Token Verification (Invalid)",
+      "success": false,
+      "message": "Expected 401, got 520",
+      "timestamp": "2026-01-21T03:42:46.447006",
+      "details": "Internal Server Error"
+    },
+    {
+      "test": "Forgot Password (Existing Email)",
+      "success": true,
+      "message": "Forgot password request processed",
+      "timestamp": "2026-01-21T03:42:47.007111",
+      "details": null
+    },
+    {
+      "test": "Forgot Password (Non-existent Email)",
+      "success": true,
+      "message": "Non-existent email handled gracefully",
+      "timestamp": "2026-01-21T03:42:47.547853",
+      "details": null
+    },
+    {
+      "test": "Supabase OAuth Sync (New User)",
+      "success": true,
+      "message": "New OAuth user synced successfully",
+      "timestamp": "2026-01-21T03:42:48.081692",
+      "details": null
+    },
+    {
+      "test": "Supabase OAuth Sync (Existing Email)",
+      "success": true,
+      "message": "Existing email correctly rejected",
+      "timestamp": "2026-01-21T03:42:48.623941",
+      "details": null
+    },
+    {
+      "test": "Get User Profile (Authenticated)",
+      "success": true,
+      "message": "Profile retrieved successfully",
+      "timestamp": "2026-01-21T03:42:49.163894",
+      "details": null
+    },
+    {
+      "test": "Get User Profile (Unauthenticated)",
+      "success": true,
+      "message": "Unauthenticated request correctly rejected",
+      "timestamp": "2026-01-21T03:42:49.709595",
+      "details": null
+    },
+    {
+      "test": "Update User Profile",
+      "success": false,
+      "message": "Profile not updated correctly",
+      "timestamp": "2026-01-21T03:42:50.249843",
+      "details": {
+        "id": "69704b32ef63137508d3f87c",
+        "email": "test_4ee9be72@example.com",
+        "name": "Test User",
+        "auth_provider": "email",
+        "avatar": null,
+        "created_at": "2026-01-21T03:42:42.754000"
+      }
+    }
+  ],
+  "timestamp": "2026-01-21T03:42:50.751026"
+}
