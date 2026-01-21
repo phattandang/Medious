@@ -15,7 +15,14 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.medious.app"
+      "bundleIdentifier": "com.medious.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Find events near you",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Show your location on the map",
+        "NSCameraUsageDescription": "Take photos for posts and events",
+        "NSPhotoLibraryUsageDescription": "Choose photos for posts and events",
+        "NSMicrophoneUsageDescription": "Record audio for video posts"
+      }
     },
     "android": {
       "adaptiveIcon": {
