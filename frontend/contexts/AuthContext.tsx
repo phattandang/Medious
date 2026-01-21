@@ -75,7 +75,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadStoredToken = async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync('auth_token');
+      const storedToken = await storage.getItem('auth_token');
       if (storedToken) {
         setToken(storedToken);
         await verifyToken(storedToken);
