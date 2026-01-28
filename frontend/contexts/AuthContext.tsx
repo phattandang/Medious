@@ -125,8 +125,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Registration failed');
+        const contentType = response.headers.get('content-type');
+        let error;
+        if (contentType && contentType.includes('application/json')) {
+          error = await response.json();
+          throw new Error(error.detail || 'Registration failed');
+        } else {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid server response format');
       }
 
       const data = await response.json();
@@ -147,8 +158,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Login failed');
+        const contentType = response.headers.get('content-type');
+        let error;
+        if (contentType && contentType.includes('application/json')) {
+          error = await response.json();
+          throw new Error(error.detail || 'Login failed');
+        } else {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid server response format');
       }
 
       const data = await response.json();
@@ -213,7 +235,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        throw new Error('Failed to sync user');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to sync user');
+        } else {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Invalid server response format');
       }
 
       const data = await response.json();
@@ -245,7 +278,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send reset email');
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const error = await response.json();
+          throw new Error(error.detail || 'Failed to send reset email');
+        } else {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
       }
     } catch (error: any) {
       throw new Error(error.message || 'Password reset failed');
@@ -263,8 +302,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Password reset failed');
+        const contentType = response.headers.get('content-type');
+        let error;
+        if (contentType && contentType.includes('application/json')) {
+          error = await response.json();
+          throw new Error(error.detail || 'Password reset failed');
+        } else {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
       }
     } catch (error: any) {
       throw new Error(error.message || 'Password reset failed');
