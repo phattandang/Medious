@@ -33,7 +33,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
-      router.replace('/home');
+      router.replace('/(main)/feed');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {

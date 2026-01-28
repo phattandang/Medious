@@ -46,7 +46,7 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       await signUp(email, password, name);
-      router.replace('/home');
+      router.replace('/(main)/feed');
     } catch (error: any) {
       Alert.alert('Registration Failed', error.message);
     } finally {
