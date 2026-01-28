@@ -894,7 +894,7 @@ async def send_event_chat_message(event_id: str, message: str, current_user: dic
         "event_id": event_id,
         "user_id": user_id,
         "message": message,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     await db.event_chats.insert_one(chat_msg)
