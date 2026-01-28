@@ -605,7 +605,7 @@ async def create_post(post: PostCreate, current_user: dict = Depends(get_current
         "content": post.content,
         "images": post.images,
         "likes": [],
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     result = await db.posts.insert_one(post_doc)
@@ -688,7 +688,7 @@ async def create_comment(post_id: str, comment: CommentCreate, current_user: dic
         "post_id": post_id,
         "user_id": str(current_user["_id"]),
         "content": comment.content,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     result = await db.comments.insert_one(comment_doc)
