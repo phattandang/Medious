@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import uuid
 
 # Backend URL from frontend environment
-BACKEND_URL = "https://auth-flow-repair-43.preview.emergentagent.com/api"
+BACKEND_URL = "https://ee6ed8aae057.ngrok-free.app/api"
 
 class MediousAuthTester:
     def __init__(self):
