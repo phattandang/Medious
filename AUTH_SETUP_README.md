@@ -39,7 +39,7 @@ SUPABASE_ANON_KEY="[configured]"
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://yqtyptjtqgqxsczfwwsk.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=[configured]
-EXPO_PUBLIC_BACKEND_URL=https://social-fusion-109.preview.emergentagent.com
+EXPO_PUBLIC_BACKEND_URL=https://auth-flow-repair-43.preview.emergentagent.com
 ```
 
 ## API Endpoints

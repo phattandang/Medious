@@ -7,7 +7,7 @@ import requests
 import json
 import uuid
 
-BACKEND_URL = "https://social-fusion-109.preview.emergentagent.com/api"
+BACKEND_URL = "https://auth-flow-repair-43.preview.emergentagent.com/api"
 
 # First register a user
 test_email = f"debug_{uuid.uuid4().hex[:8]}@example.com"

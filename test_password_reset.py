@@ -9,7 +9,7 @@ import uuid
 import re
 import time
 
-BACKEND_URL = "https://social-fusion-109.preview.emergentagent.com/api"
+BACKEND_URL = "https://auth-flow-repair-43.preview.emergentagent.com/api"
 
 def test_password_reset_flow():
     """Test complete password reset flow"""
