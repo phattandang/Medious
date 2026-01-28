@@ -747,7 +747,7 @@ async def follow_user(user_id: str, current_user: dict = Depends(get_current_use
         await db.follows.insert_one({
             "follower_id": str(current_user["_id"]),
             "following_id": user_id,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(timezone.utc)
         })
         return {"message": "Following", "is_following": True}
 
@@ -791,7 +791,7 @@ async def send_message(message: MessageCreate, current_user: dict = Depends(get_
         "receiver_id": message.receiver_id,
         "content": message.content,
         "read": False,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc)
     }
     
     result = await db.messages.insert_one(message_doc)
