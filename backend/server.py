@@ -400,7 +400,7 @@ async def update_profile(
     bio: Optional[str] = None,
     current_user: dict = Depends(get_current_user)
 ):
-    update_data = {"updated_at": datetime.utcnow()}
+    update_data = {"updated_at": datetime.now(timezone.utc)}
     if name:
         update_data["name"] = name
     if avatar:
@@ -433,8 +433,8 @@ async def create_event(event: EventCreate, current_user: dict = Depends(get_curr
         **event.dict(),
         "host_id": str(current_user["_id"]),
         "attendees": [],
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
     }
     
     result = await db.events.insert_one(event_doc)
