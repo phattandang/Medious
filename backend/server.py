@@ -338,7 +338,7 @@ async def reset_password(request: ResetPasswordRequest):
     await db.users.update_one(
         {"_id": user["_id"]},
         {
-            "$set": {"password_hash": get_password_hash(request.new_password), "updated_at": datetime.utcnow()},
+            "$set": {"password_hash": get_password_hash(request.new_password), "updated_at": datetime.now(timezone.utc)},
             "$unset": {"reset_token": "", "reset_expiry": ""}
         }
     )
@@ -369,8 +369,8 @@ async def supabase_sync(sync_data: SupabaseSyncRequest):
         "supabase_user_id": sync_data.supabase_user_id,
         "avatar": sync_data.avatar,
         "bio": None,
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow()
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc)
     }
     
     result = await db.users.insert_one(new_user)
