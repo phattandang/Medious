@@ -19,6 +19,7 @@ from bson import ObjectId
 import math
 from contextlib import asynccontextmanager
 
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -37,8 +38,8 @@ async def lifespan(app: FastAPI):
     # Shutdown
     client.close()
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Password hashing with Argon2 (no 72-byte limit, more secure than bcrypt)
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 # JWT Configuration
 JWT_SECRET = os.getenv("JWT_SECRET", "5fc008ec2a0038269653326085c7f918770401c57d2b1a05d303cfb37de4b427")
