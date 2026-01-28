@@ -314,7 +314,7 @@ async def forgot_password(request: ForgotPasswordRequest):
         return {"message": "If the email exists, a reset link has been sent"}
     
     reset_token = str(uuid.uuid4())
-    reset_expiry = datetime.utcnow() + timedelta(hours=1)
+    reset_expiry = datetime.now(timezone.utc) + timedelta(hours=1)
     
     await db.users.update_one(
         {"_id": user["_id"]},
@@ -329,7 +329,7 @@ async def reset_password(request: ResetPasswordRequest):
     user = await db.users.find_one({
         "email": request.email,
         "reset_token": request.reset_token,
-        "reset_expiry": {"$gt": datetime.utcnow()}
+        "reset_expiry": {"$gt": datetime.now(timezone.utc)}
     })
     
     if not user:
