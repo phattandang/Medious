@@ -11,7 +11,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr, ValidationError
 from typing import Optional, List, Dict, Any
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from passlib.context import CryptContext
 import jwt
 from jwt.exceptions import PyJWTError, ExpiredSignatureError

@@ -43,6 +43,9 @@ interface User {
   name: string;
   auth_provider: string;
   avatar?: string;
+  bio?: string;
+  followers_count?: number;
+  following_count?: number;
   created_at: string;
 }
 
