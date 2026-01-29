@@ -18,6 +18,7 @@ from jwt.exceptions import PyJWTError, ExpiredSignatureError
 from bson import ObjectId
 import math
 from contextlib import asynccontextmanager
+import base64
 
 
 ROOT_DIR = Path(__file__).parent
@@ -33,10 +34,31 @@ db = client[db_name]
 # Lifespan event handler
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup - Create indexes
+    await create_indexes()
     yield
     # Shutdown
     client.close()
+
+async def create_indexes():
+    """Create necessary MongoDB indexes on startup"""
+    try:
+        # Geospatial index for nearby users
+        await db.users.create_index([("location", "2dsphere")], background=True)
+
+        # TTL index for auto-expiring stories (24 hours)
+        await db.stories.create_index("expires_at", expireAfterSeconds=0, background=True)
+
+        # Index for faster feed queries
+        await db.posts.create_index([("user_id", 1), ("created_at", -1)], background=True)
+
+        # Indexes for follows lookups
+        await db.follows.create_index("follower_id", background=True)
+        await db.follows.create_index("following_id", background=True)
+
+        logging.info("MongoDB indexes created successfully")
+    except Exception as e:
+        logging.warning(f"Error creating indexes (may already exist): {e}")
 
 # Password hashing with Argon2 (no 72-byte limit, more secure than bcrypt)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -110,6 +132,7 @@ class UserResponse(BaseModel):
     bio: Optional[str] = None
     followers_count: int = 0
     following_count: int = 0
+    location_sharing_enabled: bool = False
     created_at: datetime
 
 class AuthResponse(BaseModel):
@@ -193,6 +216,53 @@ class EventChatMessage(BaseModel):
     event_id: str
     message: str
 
+# ============= STORY MODELS =============
+class StoryCreate(BaseModel):
+    media_type: str  # "image" or "video"
+    media_url: str
+    thumbnail_url: Optional[str] = None
+
+class StoryResponse(BaseModel):
+    id: str
+    user: Dict[str, Any]
+    media_type: str
+    media_url: str
+    thumbnail_url: Optional[str] = None
+    views_count: int
+    is_viewed: bool = False
+    created_at: datetime
+    expires_at: datetime
+
+class UserStoriesResponse(BaseModel):
+    user: Dict[str, Any]
+    stories: List[StoryResponse]
+    has_unviewed: bool
+
+# ============= LOCATION MODELS =============
+class LocationUpdate(BaseModel):
+    latitude: float
+    longitude: float
+
+class NearbyUserResponse(BaseModel):
+    id: str
+    name: str
+    avatar: Optional[str] = None
+    bio: Optional[str] = None
+    distance_km: float
+    location: Dict[str, float]
+
+class ProfileUpdate(BaseModel):
+    name: Optional[str] = None
+    avatar: Optional[str] = None
+    bio: Optional[str] = None
+    location_sharing_enabled: Optional[bool] = None
+
+# ============= PAGINATION MODELS =============
+class PaginatedPostsResponse(BaseModel):
+    posts: List[PostResponse]
+    next_cursor: Optional[str] = None
+    has_more: bool = False
+
 # ============= HELPER FUNCTIONS =============
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
@@ -245,7 +315,7 @@ async def user_to_dict(user: dict) -> dict:
     """Convert user document to dictionary"""
     followers_count = await db.follows.count_documents({"following_id": str(user["_id"])})
     following_count = await db.follows.count_documents({"follower_id": str(user["_id"])})
-    
+
     return {
         "id": str(user["_id"]),
         "name": user["name"],
@@ -253,8 +323,20 @@ async def user_to_dict(user: dict) -> dict:
         "avatar": user.get("avatar"),
         "bio": user.get("bio"),
         "followers_count": followers_count,
-        "following_count": following_count
+        "following_count": following_count,
+        "location_sharing_enabled": user.get("location_sharing_enabled", False)
     }
+
+def encode_cursor(created_at: datetime, post_id: str) -> str:
+    """Encode cursor for pagination"""
+    cursor_str = f"{created_at.isoformat()}|{post_id}"
+    return base64.urlsafe_b64encode(cursor_str.encode()).decode()
+
+def decode_cursor(cursor: str) -> tuple:
+    """Decode cursor for pagination"""
+    decoded = base64.urlsafe_b64decode(cursor.encode()).decode()
+    date_str, post_id = decoded.split("|")
+    return datetime.fromisoformat(date_str), post_id
 
 # ============= AUTH ROUTES =============
 @api_router.post("/auth/register", response_model=AuthResponse)
@@ -396,19 +478,21 @@ async def get_profile(current_user: dict = Depends(get_current_user)):
 
 @api_router.put("/users/profile", response_model=UserResponse)
 async def update_profile(
-    name: Optional[str] = None,
-    avatar: Optional[str] = None,
-    bio: Optional[str] = None,
+    profile: ProfileUpdate,
     current_user: dict = Depends(get_current_user)
 ):
     update_data = {"updated_at": datetime.now(timezone.utc)}
-    if name:
-        update_data["name"] = name
-    if avatar:
-        update_data["avatar"] = avatar
-    if bio is not None:
-        update_data["bio"] = bio
-    
+    if profile.name:
+        update_data["name"] = profile.name
+    if profile.avatar:
+        update_data["avatar"] = profile.avatar
+    if profile.bio is not None:
+        update_data["bio"] = profile.bio
+    if profile.location_sharing_enabled is not None:
+        update_data["location_sharing_enabled"] = profile.location_sharing_enabled
+        if not profile.location_sharing_enabled:
+            update_data["location"] = None  # Clear location when disabling
+
     await db.users.update_one({"_id": current_user["_id"]}, {"$set": update_data})
     updated_user = await db.users.find_one({"_id": current_user["_id"]})
     user_dict = await user_to_dict(updated_user)
@@ -623,25 +707,49 @@ async def create_post(post: PostCreate, current_user: dict = Depends(get_current
         created_at=post_doc["created_at"]
     )
 
-@api_router.get("/posts", response_model=List[PostResponse])
-async def get_feed(current_user: dict = Depends(get_current_user)):
+@api_router.get("/posts", response_model=PaginatedPostsResponse)
+async def get_feed(
+    cursor: Optional[str] = None,
+    limit: int = Query(default=20, le=50),
+    current_user: dict = Depends(get_current_user)
+):
     # Get posts from followed users + own posts
     following = await db.follows.find({"follower_id": str(current_user["_id"])}).to_list(1000)
     following_ids = [f["following_id"] for f in following]
     following_ids.append(str(current_user["_id"]))
-    
-    posts = await db.posts.find({"user_id": {"$in": following_ids}}).sort("created_at", -1).limit(50).to_list(1000)
-    
+
+    query = {"user_id": {"$in": following_ids}}
+
+    # Cursor-based pagination
+    if cursor:
+        try:
+            cursor_date, cursor_id = decode_cursor(cursor)
+            query["$or"] = [
+                {"created_at": {"$lt": cursor_date}},
+                {"created_at": cursor_date, "_id": {"$lt": ObjectId(cursor_id)}}
+            ]
+        except Exception:
+            pass  # Invalid cursor, ignore
+
+    posts = await db.posts.find(query).sort([
+        ("created_at", -1),
+        ("_id", -1)
+    ]).limit(limit + 1).to_list(limit + 1)
+
+    has_more = len(posts) > limit
+    if has_more:
+        posts = posts[:limit]
+
     result = []
     for post in posts:
         user = await db.users.find_one({"_id": ObjectId(post["user_id"])})
         if not user:
             continue
-        
+
         user_dict = await user_to_dict(user)
         comments_count = await db.comments.count_documents({"post_id": str(post["_id"])})
         is_liked = str(current_user["_id"]) in post.get("likes", [])
-        
+
         result.append(PostResponse(
             id=str(post["_id"]),
             user=user_dict,
@@ -652,8 +760,17 @@ async def get_feed(current_user: dict = Depends(get_current_user)):
             is_liked=is_liked,
             created_at=post["created_at"]
         ))
-    
-    return result
+
+    next_cursor = None
+    if has_more and posts:
+        last = posts[-1]
+        next_cursor = encode_cursor(last["created_at"], str(last["_id"]))
+
+    return PaginatedPostsResponse(
+        posts=result,
+        next_cursor=next_cursor,
+        has_more=has_more
+    )
 
 @api_router.post("/posts/{post_id}/like")
 async def like_post(post_id: str, current_user: dict = Depends(get_current_user)):
@@ -928,6 +1045,252 @@ async def get_event_chat(event_id: str, current_user: dict = Depends(get_current
             })
     
     return {"messages": result}
+
+# ============= STORY ROUTES =============
+@api_router.post("/stories", response_model=StoryResponse)
+async def create_story(
+    story: StoryCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    story_doc = {
+        "user_id": str(current_user["_id"]),
+        "media_type": story.media_type,
+        "media_url": story.media_url,
+        "thumbnail_url": story.thumbnail_url,
+        "views": [],
+        "created_at": datetime.now(timezone.utc),
+        "expires_at": datetime.now(timezone.utc) + timedelta(hours=24)
+    }
+
+    result = await db.stories.insert_one(story_doc)
+    user_dict = await user_to_dict(current_user)
+
+    return StoryResponse(
+        id=str(result.inserted_id),
+        user=user_dict,
+        media_type=story.media_type,
+        media_url=story.media_url,
+        thumbnail_url=story.thumbnail_url,
+        views_count=0,
+        is_viewed=False,
+        created_at=story_doc["created_at"],
+        expires_at=story_doc["expires_at"]
+    )
+
+@api_router.get("/stories/feed", response_model=List[UserStoriesResponse])
+async def get_stories_feed(current_user: dict = Depends(get_current_user)):
+    """Get stories from followed users + own stories for the carousel"""
+    following = await db.follows.find({"follower_id": str(current_user["_id"])}).to_list(1000)
+    following_ids = [f["following_id"] for f in following]
+    following_ids.append(str(current_user["_id"]))
+
+    # Get active stories (not expired)
+    now = datetime.now(timezone.utc)
+    stories = await db.stories.find({
+        "user_id": {"$in": following_ids},
+        "expires_at": {"$gt": now}
+    }).sort("created_at", -1).to_list(1000)
+
+    # Group by user
+    user_stories_map = {}
+    for story in stories:
+        user_id = story["user_id"]
+        if user_id not in user_stories_map:
+            user_stories_map[user_id] = []
+        user_stories_map[user_id].append(story)
+
+    result = []
+    current_user_id = str(current_user["_id"])
+
+    for user_id, user_story_list in user_stories_map.items():
+        user = await db.users.find_one({"_id": ObjectId(user_id)})
+        if not user:
+            continue
+
+        user_dict = await user_to_dict(user)
+        story_responses = []
+        has_unviewed = False
+
+        for story in user_story_list:
+            is_viewed = current_user_id in story.get("views", [])
+            if not is_viewed:
+                has_unviewed = True
+
+            story_responses.append(StoryResponse(
+                id=str(story["_id"]),
+                user=user_dict,
+                media_type=story["media_type"],
+                media_url=story["media_url"],
+                thumbnail_url=story.get("thumbnail_url"),
+                views_count=len(story.get("views", [])),
+                is_viewed=is_viewed,
+                created_at=story["created_at"],
+                expires_at=story["expires_at"]
+            ))
+
+        result.append(UserStoriesResponse(
+            user=user_dict,
+            stories=story_responses,
+            has_unviewed=has_unviewed
+        ))
+
+    # Sort: own stories first, then unviewed, then by recency
+    result.sort(key=lambda x: (
+        x.user["id"] != current_user_id,  # Own stories first
+        not x.has_unviewed,  # Unviewed before viewed
+        -x.stories[0].created_at.timestamp() if x.stories else 0
+    ))
+
+    return result
+
+@api_router.post("/stories/{story_id}/view")
+async def mark_story_viewed(
+    story_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Mark a story as viewed by current user"""
+    try:
+        story = await db.stories.find_one({"_id": ObjectId(story_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    user_id = str(current_user["_id"])
+    if user_id not in story.get("views", []):
+        await db.stories.update_one(
+            {"_id": ObjectId(story_id)},
+            {"$push": {"views": user_id}}
+        )
+
+    return {"message": "Story marked as viewed"}
+
+@api_router.delete("/stories/{story_id}")
+async def delete_story(
+    story_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete own story"""
+    try:
+        story = await db.stories.find_one({"_id": ObjectId(story_id)})
+    except:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    if not story:
+        raise HTTPException(status_code=404, detail="Story not found")
+
+    if story["user_id"] != str(current_user["_id"]):
+        raise HTTPException(status_code=403, detail="Cannot delete other user's story")
+
+    await db.stories.delete_one({"_id": ObjectId(story_id)})
+    return {"message": "Story deleted"}
+
+# ============= LOCATION ROUTES =============
+@api_router.put("/users/location")
+async def update_location(
+    location: LocationUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update user's current location"""
+    if not current_user.get("location_sharing_enabled", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Location sharing is not enabled. Enable it in your profile settings."
+        )
+
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": {
+            "location": {
+                "type": "Point",
+                "coordinates": [location.longitude, location.latitude]  # GeoJSON order: [lng, lat]
+            },
+            "location_updated_at": datetime.now(timezone.utc)
+        }}
+    )
+
+    return {"message": "Location updated"}
+
+@api_router.put("/users/location-sharing")
+async def toggle_location_sharing(
+    enabled: bool = Query(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """Enable or disable location sharing"""
+    update_data = {"location_sharing_enabled": enabled}
+
+    if not enabled:
+        # Clear location when disabling
+        update_data["location"] = None
+
+    await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": update_data}
+    )
+
+    return {"message": f"Location sharing {'enabled' if enabled else 'disabled'}"}
+
+@api_router.get("/users/nearby", response_model=List[NearbyUserResponse])
+async def get_nearby_users(
+    latitude: float = Query(...),
+    longitude: float = Query(...),
+    radius_km: float = Query(default=10, le=50),
+    limit: int = Query(default=50, le=100),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get users within specified radius who have opted-in to location sharing"""
+    # Convert km to meters for MongoDB
+    radius_meters = radius_km * 1000
+
+    # Use aggregation with $geoNear for efficient geospatial query
+    pipeline = [
+        {
+            "$geoNear": {
+                "near": {
+                    "type": "Point",
+                    "coordinates": [longitude, latitude]
+                },
+                "distanceField": "distance",
+                "maxDistance": radius_meters,
+                "spherical": True,
+                "query": {
+                    "location_sharing_enabled": True,
+                    "_id": {"$ne": current_user["_id"]}  # Exclude self
+                }
+            }
+        },
+        {"$limit": limit},
+        {
+            "$project": {
+                "_id": 1,
+                "name": 1,
+                "avatar": 1,
+                "bio": 1,
+                "distance": 1,
+                "location": 1
+            }
+        }
+    ]
+
+    users = await db.users.aggregate(pipeline).to_list(limit)
+
+    result = []
+    for user in users:
+        coords = user.get("location", {}).get("coordinates", [0, 0])
+        result.append(NearbyUserResponse(
+            id=str(user["_id"]),
+            name=user["name"],
+            avatar=user.get("avatar"),
+            bio=user.get("bio"),
+            distance_km=round(user["distance"] / 1000, 2),
+            location={
+                "latitude": coords[1],
+                "longitude": coords[0]
+            }
+        ))
+
+    return result
 
 # ============= SEARCH ROUTES =============
 @api_router.get("/search")

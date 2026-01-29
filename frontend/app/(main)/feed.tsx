@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,93 +6,120 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
-  TextInput,
   ActivityIndicator,
   RefreshControl,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
-import Constants from 'expo-constants';
-
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl;
-
-interface Post {
-  id: string;
-  user: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  content: string;
-  images: string[];
-  likes_count: number;
-  comments_count: number;
-  is_liked: boolean;
-  created_at: string;
-}
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
+import { useStories } from '../../hooks/useStories';
+import { postsApi } from '../../lib/api';
+import { LoadingFooter } from '../../components/common/LoadingFooter';
+import { StoriesCarousel } from '../../components/stories/StoriesCarousel';
+import { StoryViewer } from '../../components/stories/StoryViewer';
+import { CreatePostModal } from '../../components/posts/CreatePostModal';
+import { CreateStoryModal } from '../../components/stories/CreateStoryModal';
+import type { Post, UserStories } from '../../types';
 
 export default function FeedScreen() {
   const { token, user } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateStory, setShowCreateStory] = useState(false);
+  const [storyViewerData, setStoryViewerData] = useState<{
+    visible: boolean;
+    userIndex: number;
+    storyIndex: number;
+  }>({ visible: false, userIndex: 0, storyIndex: 0 });
 
-  useEffect(() => {
-    loadFeed();
-  }, []);
+  // Infinite scroll for posts
+  const {
+    items: posts,
+    loading,
+    loadingMore,
+    refreshing,
+    hasMore,
+    loadMore,
+    refresh,
+    setItems: setPosts,
+  } = useInfiniteScroll<Post>({
+    fetchFn: async (cursor?: string) => {
+      if (!token) throw new Error('Not authenticated');
+      const response = await postsApi.getFeed(token, cursor);
+      return {
+        items: response.posts,
+        nextCursor: response.next_cursor,
+        hasMore: response.has_more,
+      };
+    },
+    enabled: !!token,
+  });
 
-  const loadFeed = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/posts`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(data);
-      }
-    } catch (error) {
-      console.error('Error loading feed:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  // Stories
+  const {
+    userStories,
+    loading: storiesLoading,
+    refreshStories,
+    markStoryViewed,
+    createStory,
+  } = useStories({ token, autoFetch: true });
 
   const handleLike = async (postId: string) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/posts/${postId}/like`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    if (!token) return;
 
-      if (response.ok) {
-        // Update local state
-        setPosts(posts.map(post => {
+    try {
+      const response = await postsApi.likePost(token, postId);
+      setPosts((prevPosts) =>
+        prevPosts.map((post) => {
           if (post.id === postId) {
             return {
               ...post,
-              is_liked: !post.is_liked,
-              likes_count: post.is_liked ? post.likes_count - 1 : post.likes_count + 1,
+              is_liked: response.is_liked,
+              likes_count: response.is_liked
+                ? post.likes_count + 1
+                : post.likes_count - 1,
             };
           }
           return post;
-        }));
-      }
+        })
+      );
     } catch (error) {
       console.error('Error liking post:', error);
     }
   };
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadFeed();
-  };
+  const handleStoryPress = useCallback(
+    (userId: string, storyIndex: number = 0) => {
+      const userIndex = userStories.findIndex((us) => us.user.id === userId);
+      if (userIndex !== -1) {
+        setStoryViewerData({
+          visible: true,
+          userIndex,
+          storyIndex,
+        });
+      }
+    },
+    [userStories]
+  );
+
+  const handleAddStoryPress = useCallback(() => {
+    setShowCreateStory(true);
+  }, []);
+
+  const handleStoryCreated = useCallback(async () => {
+    setShowCreateStory(false);
+    await refreshStories();
+  }, [refreshStories]);
+
+  const handlePostCreated = useCallback(async () => {
+    setShowCreatePost(false);
+    await refresh();
+  }, [refresh]);
+
+  const onRefresh = useCallback(async () => {
+    await Promise.all([refresh(), refreshStories()]);
+  }, [refresh, refreshStories]);
 
   const renderPost = ({ item }: { item: Post }) => (
     <View style={styles.postCard}>
@@ -115,7 +142,22 @@ export default function FeedScreen() {
 
       {/* Post Images */}
       {item.images.length > 0 && (
-        <Image source={{ uri: item.images[0] }} style={styles.postImage} />
+        <View style={styles.imagesContainer}>
+          {item.images.length === 1 ? (
+            <Image source={{ uri: item.images[0] }} style={styles.postImage} />
+          ) : (
+            <FlatList
+              data={item.images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(uri, index) => `${item.id}-img-${index}`}
+              renderItem={({ item: imageUri }) => (
+                <Image source={{ uri: imageUri }} style={styles.postImage} />
+              )}
+            />
+          )}
+        </View>
       )}
 
       {/* Post Actions */}
@@ -144,7 +186,32 @@ export default function FeedScreen() {
     </View>
   );
 
-  if (loading) {
+  const renderHeader = () => (
+    <StoriesCarousel
+      userStories={userStories}
+      currentUserId={user?.id}
+      loading={storiesLoading}
+      onStoryPress={handleStoryPress}
+      onAddStoryPress={handleAddStoryPress}
+    />
+  );
+
+  const renderFooter = () => (
+    <LoadingFooter loading={loadingMore} hasMore={hasMore} />
+  );
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    return (
+      <View style={styles.emptyContainer}>
+        <Ionicons name="images-outline" size={64} color="#475569" />
+        <Text style={styles.emptyText}>No posts yet</Text>
+        <Text style={styles.emptySubtext}>Follow users to see their posts</Text>
+      </View>
+    );
+  };
+
+  if (loading && posts.length === 0) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#6366F1" />
@@ -159,6 +226,11 @@ export default function FeedScreen() {
         renderItem={renderPost}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+        ListHeaderComponent={renderHeader}
+        ListFooterComponent={renderFooter}
+        ListEmptyComponent={renderEmpty}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -166,19 +238,42 @@ export default function FeedScreen() {
             tintColor="#6366F1"
           />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Ionicons name="images-outline" size={64} color="#475569" />
-            <Text style={styles.emptyText}>No posts yet</Text>
-            <Text style={styles.emptySubtext}>Follow users to see their posts</Text>
-          </View>
-        }
       />
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setShowCreatePost(true)}
+      >
         <Ionicons name="add" size={28} color="#FFFFFF" />
       </TouchableOpacity>
+
+      {/* Story Viewer Modal */}
+      {storyViewerData.visible && (
+        <StoryViewer
+          userStories={userStories}
+          initialUserIndex={storyViewerData.userIndex}
+          initialStoryIndex={storyViewerData.storyIndex}
+          onClose={() =>
+            setStoryViewerData({ visible: false, userIndex: 0, storyIndex: 0 })
+          }
+          onStoryViewed={markStoryViewed}
+        />
+      )}
+
+      {/* Create Post Modal */}
+      <CreatePostModal
+        visible={showCreatePost}
+        onClose={() => setShowCreatePost(false)}
+        onPostCreated={handlePostCreated}
+      />
+
+      {/* Create Story Modal */}
+      <CreateStoryModal
+        visible={showCreateStory}
+        onClose={() => setShowCreateStory(false)}
+        onStoryCreated={handleStoryCreated}
+      />
     </SafeAreaView>
   );
 }
@@ -195,7 +290,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F172A',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 100,
   },
   postCard: {
     backgroundColor: '#1E293B',
@@ -239,11 +335,13 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: 12,
   },
+  imagesContainer: {
+    marginBottom: 12,
+  },
   postImage: {
     width: '100%',
     height: 300,
     borderRadius: 8,
-    marginBottom: 12,
   },
   postActions: {
     flexDirection: 'row',

@@ -1,0 +1,45 @@
+import React from 'react';
+import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+
+interface LoadingFooterProps {
+  loading: boolean;
+  hasMore?: boolean;
+  noMoreText?: string;
+}
+
+export function LoadingFooter({
+  loading,
+  hasMore = true,
+  noMoreText = "You're all caught up!",
+}: LoadingFooterProps) {
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="small" color="#6366F1" />
+      </View>
+    );
+  }
+
+  if (!hasMore) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.noMoreText}>{noMoreText}</Text>
+      </View>
+    );
+  }
+
+  return null;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
+  noMoreText: {
+    color: '#64748B',
+    fontSize: 14,
+  },
+});
+
+export default LoadingFooter;

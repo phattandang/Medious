@@ -1,11 +1,12 @@
-import React from 'react';
-import { Platform, Pressable, View, GestureResponderEvent } from 'react-native';
+import React, { useEffect } from 'react';
+import { Platform, Pressable, View, ActivityIndicator, StyleSheet } from 'react-native';
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Brand palette (unique, modern, still “social”)
 const COLORS = {
@@ -60,6 +61,34 @@ function CreateTabButton(props: BottomTabBarButtonProps) {
 }
 
 export default function MainLayout() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [user, loading, router]);
+
+  // Show loading while checking auth
+  if (loading) {
+    return (
+      <View style={authStyles.container}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
+
+  // Don't render tabs if not authenticated
+  if (!user) {
+    return (
+      <View style={authStyles.container}>
+        <ActivityIndicator size="large" color="#6366F1" />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -174,4 +203,13 @@ export default function MainLayout() {
       <Tabs.Screen name="search" options={{ href: null }} />
     </Tabs>
   );
-} 
+}
+
+const authStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0F172A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+}); 
