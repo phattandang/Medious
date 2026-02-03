@@ -1,17 +1,10 @@
 import { supabase } from './supabase';
-import * as FileSystem from 'expo-file-system';
-import { decode } from 'base64-arraybuffer';
 
 export type StorageBucket = 'posts' | 'stories' | 'avatars';
 
 interface UploadResult {
   url: string;
   path: string;
-}
-
-interface UploadProgress {
-  loaded: number;
-  total: number;
 }
 
 /**
@@ -35,10 +28,9 @@ export async function uploadImage(
       ? `${folder}/${timestamp}_${randomId}.${extension}`
       : `${timestamp}_${randomId}.${extension}`;
 
-    // Read file as base64
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    // Fetch the file and convert to blob
+    const response = await fetch(uri);
+    const blob = await response.blob();
 
     // Determine content type
     const contentType = getContentType(extension);
@@ -46,7 +38,7 @@ export async function uploadImage(
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, decode(base64), {
+      .upload(fileName, blob, {
         contentType,
         upsert: false,
       });
@@ -114,15 +106,14 @@ export async function uploadVideo(
     const extension = uri.split('.').pop()?.toLowerCase() || 'mp4';
     const fileName = `${timestamp}_${randomId}.${extension}`;
 
-    // Read file as base64
-    const base64 = await FileSystem.readAsStringAsync(uri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
+    // Fetch the file and convert to blob
+    const response = await fetch(uri);
+    const blob = await response.blob();
 
     // Upload video
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(fileName, decode(base64), {
+      .upload(fileName, blob, {
         contentType: getContentType(extension),
         upsert: false,
       });
@@ -137,7 +128,7 @@ export async function uploadVideo(
 
     return {
       videoUrl: urlData.publicUrl,
-      thumbnailUrl: undefined, // Thumbnail generation would require additional processing
+      thumbnailUrl: undefined,
     };
   } catch (error: any) {
     console.error('Video upload error:', error);

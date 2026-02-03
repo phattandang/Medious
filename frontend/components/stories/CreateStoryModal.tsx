@@ -43,7 +43,7 @@ export function CreateStoryModal({
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ['images', 'videos'],
         allowsEditing: true,
         aspect: [9, 16],
         quality: 0.8,
@@ -71,7 +71,7 @@ export function CreateStoryModal({
       }
 
       const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.All,
+        mediaTypes: ['images', 'videos'],
         allowsEditing: true,
         aspect: [9, 16],
         quality: 0.8,

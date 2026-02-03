@@ -11,7 +11,7 @@
     "extra": {
       "supabaseUrl": "https://yqtyptjtqgqxsczfwwsk.supabase.co",
       "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlxdHlwdGp0cWdxeHNjemZ3d3NrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg2MDIxMzgsImV4cCI6MjA4NDE3ODEzOH0.Hk6d_QMnojaRJXdUUGSuaq-mgzLjACKJoO5fwTgzcH8",
-      "backendUrl": "https://cf82b4a89401.ngrok-free.app"
+      "backendUrl": "https://b0e29da85956.ngrok-free.app"
     },
     "ios": {
       "supportsTablet": true,

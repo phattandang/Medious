@@ -36,6 +36,7 @@ async function apiRequest<T>(
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true', // Skip ngrok interstitial page
   };
 
   if (token) {
