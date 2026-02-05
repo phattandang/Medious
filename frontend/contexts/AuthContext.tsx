@@ -106,6 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (storedToken) {
         setToken(storedToken);
         await verifyToken(storedToken);
+        // Ensure Supabase session for Storage access
+        await ensureSupabaseSession();
       }
     } catch (error) {
       console.error('Error loading token:', error);
@@ -142,6 +144,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(userData);
   };
 
+  // Ensure user has a Supabase session for Storage access
+  const ensureSupabaseSession = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Sign in anonymously to get a valid session for Storage
+      const { error } = await supabase.auth.signInAnonymously();
+      if (error) {
+        console.warn('Failed to create anonymous Supabase session:', error.message);
+      } else {
+        console.log('Created anonymous Supabase session for Storage access');
+      }
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
     try {
       console.log('Attempting registration to:', `${BACKEND_URL}/api/auth/register`);
@@ -174,6 +190,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       await saveAuthData(data.token, data.user);
+
+      // Ensure Supabase session for Storage access
+      await ensureSupabaseSession();
     } catch (error: any) {
       console.error('Registration error:', error);
       throw new Error(error.message || 'Registration failed');
@@ -212,6 +231,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const data = await response.json();
       await saveAuthData(data.token, data.user);
+
+      // Ensure Supabase session for Storage access
+      await ensureSupabaseSession();
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.message || 'Login failed');
