@@ -12,6 +12,9 @@ import type {
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || Constants.expoConfig?.extra?.backendUrl;
 
+// Debug: Log the backend URL on startup
+console.log('🔗 API Backend URL:', BACKEND_URL);
+
 class ApiError extends Error {
   status: number;
 
@@ -52,7 +55,10 @@ async function apiRequest<T>(
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(`${BACKEND_URL}${endpoint}`, config);
+  const fullUrl = `${BACKEND_URL}${endpoint}`;
+  console.log(`📡 API Request: ${method} ${fullUrl}`);
+
+  const response = await fetch(fullUrl, config);
 
   if (!response.ok) {
     const contentType = response.headers.get('content-type');

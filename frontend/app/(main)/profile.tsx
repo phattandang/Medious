@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
+import { colors } from '../../lib/theme';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -14,7 +15,7 @@ export default function ProfileScreen() {
           {user?.avatar ? (
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
           ) : (
-            <Ionicons name="person-circle" size={100} color="#6366F1" />
+            <Ionicons name="person-circle" size={100} color={colors.primary} />
           )}
         </View>
         <Text style={styles.name}>{user?.name}</Text>
@@ -44,7 +45,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   content: {
     flex: 1,
@@ -63,18 +64,23 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 4,
   },
   email: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textMuted,
     marginBottom: 24,
   },
   statsContainer: {
     flexDirection: 'row',
     gap: 32,
     marginBottom: 32,
+    backgroundColor: colors.surface,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   stat: {
     alignItems: 'center',
@@ -82,16 +88,16 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textMuted,
   },
   info: {
     fontSize: 14,
-    color: '#64748B',
+    color: colors.textMuted,
     textAlign: 'center',
   },
 });

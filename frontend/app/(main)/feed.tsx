@@ -8,7 +8,6 @@ import {
   Image,
   ActivityIndicator,
   RefreshControl,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,12 +15,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 import { useStories } from '../../hooks/useStories';
 import { postsApi } from '../../lib/api';
+import { colors } from '../../lib/theme';
 import { LoadingFooter } from '../../components/common/LoadingFooter';
 import { StoriesCarousel } from '../../components/stories/StoriesCarousel';
 import { StoryViewer } from '../../components/stories/StoryViewer';
 import { CreatePostModal } from '../../components/posts/CreatePostModal';
 import { CreateStoryModal } from '../../components/stories/CreateStoryModal';
-import type { Post, UserStories } from '../../types';
+import type { Post } from '../../types';
 
 export default function FeedScreen() {
   const { token, user } = useAuth();
@@ -62,7 +62,6 @@ export default function FeedScreen() {
     loading: storiesLoading,
     refreshStories,
     markStoryViewed,
-    createStory,
   } = useStories({ token, autoFetch: true });
 
   const handleLike = async (postId: string) => {
@@ -130,11 +129,14 @@ export default function FeedScreen() {
             <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
           ) : (
             <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={20} color="#94A3B8" />
+              <Ionicons name="person" size={20} color={colors.textMuted} />
             </View>
           )}
           <Text style={styles.userName}>{item.user.name}</Text>
         </View>
+        <TouchableOpacity>
+          <Ionicons name="ellipsis-horizontal" size={20} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
       {/* Post Content */}
@@ -151,7 +153,7 @@ export default function FeedScreen() {
               horizontal
               pagingEnabled
               showsHorizontalScrollIndicator={false}
-              keyExtractor={(uri, index) => `${item.id}-img-${index}`}
+              keyExtractor={(_, index) => `${item.id}-img-${index}`}
               renderItem={({ item: imageUri }) => (
                 <Image source={{ uri: imageUri }} style={styles.postImage} />
               )}
@@ -169,18 +171,26 @@ export default function FeedScreen() {
           <Ionicons
             name={item.is_liked ? 'heart' : 'heart-outline'}
             size={24}
-            color={item.is_liked ? '#EF4444' : '#94A3B8'}
+            color={item.is_liked ? colors.like : colors.textMuted}
           />
-          <Text style={styles.actionText}>{item.likes_count}</Text>
+          <Text style={[styles.actionText, item.is_liked && { color: colors.like }]}>
+            {item.likes_count}
+          </Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="chatbubble-outline" size={24} color="#94A3B8" />
+          <Ionicons name="chatbubble-outline" size={24} color={colors.textMuted} />
           <Text style={styles.actionText}>{item.comments_count}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="share-outline" size={24} color="#94A3B8" />
+          <Ionicons name="share-outline" size={24} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        <View style={{ flex: 1 }} />
+
+        <TouchableOpacity>
+          <Ionicons name="bookmark-outline" size={24} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
     </View>
@@ -204,7 +214,7 @@ export default function FeedScreen() {
     if (loading) return null;
     return (
       <View style={styles.emptyContainer}>
-        <Ionicons name="images-outline" size={64} color="#475569" />
+        <Ionicons name="images-outline" size={64} color={colors.textMuted} />
         <Text style={styles.emptyText}>No posts yet</Text>
         <Text style={styles.emptySubtext}>Follow users to see their posts</Text>
       </View>
@@ -214,7 +224,7 @@ export default function FeedScreen() {
   if (loading && posts.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -235,18 +245,10 @@ export default function FeedScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#6366F1"
+            tintColor={colors.primary}
           />
         }
       />
-
-      {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowCreatePost(true)}
-      >
-        <Ionicons name="add" size={28} color="#FFFFFF" />
-      </TouchableOpacity>
 
       {/* Story Viewer Modal */}
       {storyViewerData.visible && (
@@ -281,23 +283,30 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
   postCard: {
-    backgroundColor: '#1E293B',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
     marginBottom: 16,
     padding: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   postHeader: {
     flexDirection: 'row',
@@ -319,7 +328,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#334155',
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -327,26 +336,30 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   postContent: {
     fontSize: 15,
-    color: '#E2E8F0',
+    color: colors.textSecondary,
     lineHeight: 22,
     marginBottom: 12,
   },
   imagesContainer: {
     marginBottom: 12,
+    marginHorizontal: -16,
   },
   postImage: {
     width: '100%',
     height: 300,
-    borderRadius: 8,
   },
   postActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
+    gap: 20,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: 4,
   },
   actionButton: {
     flexDirection: 'row',
@@ -355,7 +368,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textMuted,
     fontWeight: '500',
   },
   emptyContainer: {
@@ -366,28 +379,12 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#E2E8F0',
+    color: colors.text,
     marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textMuted,
     marginTop: 8,
-  },
-  fab: {
-    position: 'absolute',
-    right: 16,
-    bottom: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#6366F1',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
 });

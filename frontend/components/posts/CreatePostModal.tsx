@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import { postsApi } from '../../lib/api';
+import { colors } from '../../lib/theme';
 
 interface CreatePostModalProps {
   visible: boolean;
@@ -53,16 +54,13 @@ export function CreatePostModal({
     try {
       setPosting(true);
 
-      // Upload images if any
       let imageUrls: string[] = [];
       if (selectedImages.length > 0) {
         imageUrls = await uploadImages();
       }
 
-      // Create post
       await postsApi.createPost(token, content.trim(), imageUrls);
 
-      // Reset form and close
       setContent('');
       clearImages();
       onPostCreated();
@@ -96,7 +94,7 @@ export function CreatePostModal({
               style={styles.closeButton}
               disabled={isLoading}
             >
-              <Ionicons name="close" size={28} color="#FFFFFF" />
+              <Ionicons name="close" size={28} color={colors.text} />
             </TouchableOpacity>
             <Text style={styles.title}>New Post</Text>
             <TouchableOpacity
@@ -105,7 +103,7 @@ export function CreatePostModal({
               disabled={!canPost || isLoading}
             >
               {isLoading ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color={colors.textInverse} />
               ) : (
                 <Text style={styles.postButtonText}>Post</Text>
               )}
@@ -138,7 +136,7 @@ export function CreatePostModal({
                 <Image source={{ uri: user.avatar }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={20} color="#94A3B8" />
+                  <Ionicons name="person" size={20} color={colors.textMuted} />
                 </View>
               )}
               <Text style={styles.userName}>{user?.name}</Text>
@@ -148,7 +146,7 @@ export function CreatePostModal({
             <TextInput
               style={styles.textInput}
               placeholder="What's on your mind?"
-              placeholderTextColor="#64748B"
+              placeholderTextColor={colors.textMuted}
               multiline
               value={content}
               onChangeText={setContent}
@@ -167,7 +165,7 @@ export function CreatePostModal({
                       onPress={() => removeImage(index)}
                       disabled={isLoading}
                     >
-                      <Ionicons name="close-circle" size={24} color="#EF4444" />
+                      <Ionicons name="close-circle" size={24} color={colors.error} />
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -185,7 +183,7 @@ export function CreatePostModal({
               <Ionicons
                 name="images-outline"
                 size={24}
-                color={selectedImages.length >= 4 ? '#475569' : '#6366F1'}
+                color={selectedImages.length >= 4 ? colors.border : colors.primary}
               />
               <Text
                 style={[
@@ -205,7 +203,7 @@ export function CreatePostModal({
               <Ionicons
                 name="camera-outline"
                 size={24}
-                color={selectedImages.length >= 4 ? '#475569' : '#6366F1'}
+                color={selectedImages.length >= 4 ? colors.border : colors.primary}
               />
               <Text
                 style={[
@@ -230,7 +228,7 @@ export function CreatePostModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -242,7 +240,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   closeButton: {
     padding: 4,
@@ -250,10 +249,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   postButton: {
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
@@ -261,32 +260,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postButtonDisabled: {
-    backgroundColor: '#475569',
+    backgroundColor: colors.border,
   },
   postButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
     fontSize: 14,
   },
   progressContainer: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.backgroundAlt,
   },
   progressText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: colors.textMuted,
     marginBottom: 4,
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#334155',
+    backgroundColor: colors.border,
     borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
   },
   content: {
     flex: 1,
@@ -307,7 +306,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#334155',
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -315,11 +314,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   textInput: {
     fontSize: 16,
-    color: '#E2E8F0',
+    color: colors.text,
     minHeight: 100,
     textAlignVertical: 'top',
   },
@@ -342,7 +341,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 12,
   },
   bottomActions: {
@@ -351,8 +350,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#1E293B',
-    backgroundColor: '#0F172A',
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
   },
   actionButton: {
     flexDirection: 'row',
@@ -362,16 +361,16 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 14,
-    color: '#6366F1',
+    color: colors.primary,
     fontWeight: '500',
   },
   actionButtonTextDisabled: {
-    color: '#475569',
+    color: colors.border,
   },
   imageCount: {
     marginLeft: 'auto',
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
   },
 });
 

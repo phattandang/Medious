@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../lib/theme';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
@@ -64,10 +65,10 @@ export default function ForgotPasswordScreen() {
               onPress={() => router.back()}
               style={styles.backButton}
             >
-              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+              <Ionicons name="arrow-back" size={24} color={colors.text} />
             </TouchableOpacity>
             <View style={styles.iconContainer}>
-              <Ionicons name="key-outline" size={48} color="#6366F1" />
+              <Ionicons name="key-outline" size={48} color={colors.primary} />
             </View>
             <Text style={styles.title}>Forgot Password?</Text>
             <Text style={styles.subtitle}>
@@ -78,11 +79,11 @@ export default function ForgotPasswordScreen() {
           {/* Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#64748B" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -97,7 +98,7 @@ export default function ForgotPasswordScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.textInverse} />
               ) : (
                 <Text style={styles.resetButtonText}>Send Reset Link</Text>
               )}
@@ -120,7 +121,7 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -138,16 +139,18 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 32,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   iconContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#1E293B',
+    backgroundColor: `${colors.primary}15`,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
@@ -155,12 +158,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textMuted,
     lineHeight: 24,
   },
   form: {
@@ -169,10 +172,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     marginBottom: 24,
     paddingHorizontal: 16,
   },
@@ -181,20 +184,25 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     paddingVertical: 16,
   },
   resetButton: {
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   resetButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -204,11 +212,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backToLoginText: {
-    color: '#94A3B8',
+    color: colors.textMuted,
     fontSize: 14,
   },
   backToLoginLink: {
-    color: '#6366F1',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },

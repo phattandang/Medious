@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../lib/theme';
 import type { UserStories } from '../../types';
 
 interface StoriesCarouselProps {
@@ -27,7 +28,6 @@ export function StoriesCarousel({
   onStoryPress,
   onAddStoryPress,
 }: StoriesCarouselProps) {
-  // Check if current user has stories
   const currentUserStories = userStories.find(
     (us) => us.user.id === currentUserId
   );
@@ -40,9 +40,8 @@ export function StoriesCarousel({
     >
       <View style={styles.addStoryContainer}>
         {currentUserStories ? (
-          // User has stories - show their avatar with gradient
           <LinearGradient
-            colors={['#6366F1', '#8B5CF6', '#EC4899']}
+            colors={[colors.primary, colors.accent]}
             style={styles.gradientRing}
           >
             <View style={styles.avatarContainer}>
@@ -53,19 +52,18 @@ export function StoriesCarousel({
                 />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={24} color="#94A3B8" />
+                  <Ionicons name="person" size={24} color={colors.textMuted} />
                 </View>
               )}
             </View>
           </LinearGradient>
         ) : (
-          // User has no stories - show plus icon
           <View style={styles.addIconContainer}>
-            <Ionicons name="add" size={28} color="#FFFFFF" />
+            <Ionicons name="add" size={28} color={colors.primary} />
           </View>
         )}
         <View style={styles.addBadge}>
-          <Ionicons name="add" size={12} color="#FFFFFF" />
+          <Ionicons name="add" size={12} color={colors.textInverse} />
         </View>
       </View>
       <Text style={styles.storyName} numberOfLines={1}>
@@ -75,7 +73,6 @@ export function StoriesCarousel({
   );
 
   const renderStoryItem = ({ item }: { item: UserStories }) => {
-    // Skip current user in the list (they have the add button)
     if (item.user.id === currentUserId) return null;
 
     return (
@@ -85,9 +82,8 @@ export function StoriesCarousel({
         activeOpacity={0.7}
       >
         {item.has_unviewed ? (
-          // Unviewed stories - show gradient ring
           <LinearGradient
-            colors={['#6366F1', '#8B5CF6', '#EC4899']}
+            colors={[colors.primary, colors.accent]}
             style={styles.gradientRing}
           >
             <View style={styles.avatarContainer}>
@@ -95,20 +91,19 @@ export function StoriesCarousel({
                 <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={24} color="#94A3B8" />
+                  <Ionicons name="person" size={24} color={colors.textMuted} />
                 </View>
               )}
             </View>
           </LinearGradient>
         ) : (
-          // All viewed - show gray ring
           <View style={styles.viewedRing}>
             <View style={styles.avatarContainer}>
               {item.user.avatar ? (
                 <Image source={{ uri: item.user.avatar }} style={styles.avatar} />
               ) : (
                 <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={24} color="#94A3B8" />
+                  <Ionicons name="person" size={24} color={colors.textMuted} />
                 </View>
               )}
             </View>
@@ -125,7 +120,7 @@ export function StoriesCarousel({
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#6366F1" />
+          <ActivityIndicator size="small" color={colors.primary} />
         </View>
       </View>
     );
@@ -179,7 +174,7 @@ const styles = StyleSheet.create({
     height: 68,
     borderRadius: 34,
     padding: 3,
-    backgroundColor: '#475569',
+    backgroundColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -187,7 +182,7 @@ const styles = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: 31,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.surface,
     padding: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -201,7 +196,7 @@ const styles = StyleSheet.create({
     width: 58,
     height: 58,
     borderRadius: 29,
-    backgroundColor: '#334155',
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -209,11 +204,11 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#334155',
+    backgroundColor: colors.surface,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#475569',
+    borderColor: colors.border,
     borderStyle: 'dashed',
   },
   addBadge: {
@@ -223,15 +218,15 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#0F172A',
+    borderColor: colors.surface,
   },
   storyName: {
     fontSize: 12,
-    color: '#E2E8F0',
+    color: colors.text,
     marginTop: 6,
     textAlign: 'center',
   },

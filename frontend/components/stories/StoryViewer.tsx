@@ -10,12 +10,12 @@ import {
   Modal,
   StatusBar,
   Animated,
-  PanResponder,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Video, ResizeMode } from 'expo-av';
-import type { UserStories, Story } from '../../types';
+import { colors } from '../../lib/theme';
+import type { UserStories } from '../../types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const STORY_DURATION = 5000; // 5 seconds per story
@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#334155',
+    backgroundColor: colors.textMuted,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,

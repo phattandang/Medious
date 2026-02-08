@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
 import { uploadImage } from '../../lib/storage';
 import { storiesApi } from '../../lib/api';
+import { colors } from '../../lib/theme';
 
 interface CreateStoryModalProps {
   visible: boolean;
@@ -124,7 +125,7 @@ export function CreateStoryModal({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <Ionicons name="close" size={28} color="#FFFFFF" />
+            <Ionicons name="close" size={28} color={colors.text} />
           </TouchableOpacity>
           <Text style={styles.title}>New Story</Text>
           <TouchableOpacity
@@ -133,7 +134,7 @@ export function CreateStoryModal({
             disabled={!selectedMedia || uploading}
           >
             {uploading ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={colors.textInverse} />
             ) : (
               <Text style={styles.postButtonText}>Share</Text>
             )}
@@ -152,14 +153,14 @@ export function CreateStoryModal({
               style={styles.removeButton}
               onPress={() => setSelectedMedia(null)}
             >
-              <Ionicons name="close-circle" size={32} color="#EF4444" />
+              <Ionicons name="close-circle" size={32} color={colors.error} />
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.optionsContainer}>
             <TouchableOpacity style={styles.optionButton} onPress={takePhoto}>
               <View style={styles.optionIcon}>
-                <Ionicons name="camera" size={32} color="#6366F1" />
+                <Ionicons name="camera" size={32} color={colors.primary} />
               </View>
               <Text style={styles.optionText}>Take Photo</Text>
               <Text style={styles.optionSubtext}>Use your camera</Text>
@@ -167,7 +168,7 @@ export function CreateStoryModal({
 
             <TouchableOpacity style={styles.optionButton} onPress={pickFromGallery}>
               <View style={styles.optionIcon}>
-                <Ionicons name="images" size={32} color="#6366F1" />
+                <Ionicons name="images" size={32} color={colors.primary} />
               </View>
               <Text style={styles.optionText}>Choose from Gallery</Text>
               <Text style={styles.optionSubtext}>Select an existing photo or video</Text>
@@ -182,7 +183,7 @@ export function CreateStoryModal({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -191,7 +192,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface,
   },
   closeButton: {
     padding: 4,
@@ -199,10 +201,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   postButton: {
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
@@ -210,16 +212,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postButtonDisabled: {
-    backgroundColor: '#475569',
+    backgroundColor: colors.border,
   },
   postButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontWeight: '600',
     fontSize: 14,
   },
   previewContainer: {
     flex: 1,
     position: 'relative',
+    backgroundColor: colors.backgroundAlt,
   },
   previewImage: {
     flex: 1,
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 16,
     right: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 16,
   },
   optionsContainer: {
@@ -241,16 +244,23 @@ const styles = StyleSheet.create({
   },
   optionButton: {
     width: '100%',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
   },
   optionIcon: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: `${colors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -258,12 +268,12 @@ const styles = StyleSheet.create({
   optionText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 4,
   },
   optionSubtext: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textMuted,
   },
 });
 

@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../../lib/theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -82,11 +83,11 @@ export default function LoginScreen() {
           {/* Email/Password Form */}
           <View style={styles.form}>
             <View style={styles.inputContainer}>
-              <Ionicons name="mail-outline" size={20} color="#64748B" style={styles.inputIcon} />
+              <Ionicons name="mail-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Email"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.textMuted}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -96,11 +97,11 @@ export default function LoginScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Ionicons name="lock-closed-outline" size={20} color="#64748B" style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={colors.textMuted} style={styles.inputIcon} />
               <TextInput
                 style={styles.input}
                 placeholder="Password"
-                placeholderTextColor="#64748B"
+                placeholderTextColor={colors.textMuted}
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
@@ -113,7 +114,7 @@ export default function LoginScreen() {
                 <Ionicons
                   name={showPassword ? 'eye-off-outline' : 'eye-outline'}
                   size={20}
-                  color="#64748B"
+                  color={colors.textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -131,7 +132,7 @@ export default function LoginScreen() {
               disabled={loading}
             >
               {loading ? (
-                <ActivityIndicator color="#FFFFFF" />
+                <ActivityIndicator color={colors.textInverse} />
               ) : (
                 <Text style={styles.loginButtonText}>Sign In</Text>
               )}
@@ -152,7 +153,7 @@ export default function LoginScreen() {
               onPress={handleGoogleLogin}
               disabled={loading}
             >
-              <Ionicons name="logo-google" size={24} color="#FFFFFF" />
+              <Ionicons name="logo-google" size={24} color={colors.text} />
               <Text style={styles.socialButtonText}>Google</Text>
             </TouchableOpacity>
 
@@ -161,7 +162,7 @@ export default function LoginScreen() {
               onPress={handleAppleLogin}
               disabled={loading}
             >
-              <Ionicons name="logo-apple" size={24} color="#FFFFFF" />
+              <Ionicons name="logo-apple" size={24} color={colors.text} />
               <Text style={styles.socialButtonText}>Apple</Text>
             </TouchableOpacity>
           </View>
@@ -182,7 +183,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -199,12 +200,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#FFFFFF',
+    color: colors.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#94A3B8',
+    color: colors.textMuted,
   },
   form: {
     marginBottom: 32,
@@ -212,10 +213,10 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     marginBottom: 16,
     paddingHorizontal: 16,
   },
@@ -224,7 +225,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     paddingVertical: 16,
   },
@@ -236,19 +237,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: '#6366F1',
+    color: colors.primary,
     fontSize: 14,
   },
   loginButton: {
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 56,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   loginButtonText: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -260,10 +266,10 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#334155',
+    backgroundColor: colors.border,
   },
   dividerText: {
-    color: '#64748B',
+    color: colors.textMuted,
     paddingHorizontal: 16,
     fontSize: 14,
   },
@@ -277,15 +283,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingVertical: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: colors.border,
     gap: 8,
   },
   socialButtonText: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -295,11 +301,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signupText: {
-    color: '#94A3B8',
+    color: colors.textMuted,
     fontSize: 14,
   },
   signupLink: {
-    color: '#6366F1',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '600',
   },

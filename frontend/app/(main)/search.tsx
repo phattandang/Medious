@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { searchApi } from '../../lib/api';
+import { colors } from '../../lib/theme';
 import type { SearchResults } from '../../types';
 
 type SearchType = 'all' | 'users' | 'events';
@@ -76,13 +77,11 @@ export default function SearchScreen() {
   }, [query, searchType, token]);
 
   const handleUserPress = (userId: string) => {
-    // Navigate to user profile
-    router.push(`/profile/${userId}`);
+    router.push(`/profile/${userId}` as any);
   };
 
   const handleEventPress = (eventId: string) => {
-    // Navigate to event details
-    router.push(`/events/${eventId}`);
+    router.push(`/events/${eventId}` as any);
   };
 
   const clearSearch = () => {
@@ -117,7 +116,7 @@ export default function SearchScreen() {
         <Image source={{ uri: item.avatar }} style={styles.avatar} />
       ) : (
         <View style={styles.avatarPlaceholder}>
-          <Ionicons name="person" size={24} color="#94A3B8" />
+          <Ionicons name="person" size={24} color={colors.textMuted} />
         </View>
       )}
       <View style={styles.resultInfo}>
@@ -132,7 +131,7 @@ export default function SearchScreen() {
           </Text>
         )}
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#64748B" />
+      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
     </TouchableOpacity>
   );
 
@@ -143,7 +142,7 @@ export default function SearchScreen() {
       activeOpacity={0.7}
     >
       <View style={styles.eventIcon}>
-        <Ionicons name="calendar" size={24} color="#6366F1" />
+        <Ionicons name="calendar" size={24} color={colors.primary} />
       </View>
       <View style={styles.resultInfo}>
         <Text style={styles.resultName}>{item.title}</Text>
@@ -155,7 +154,7 @@ export default function SearchScreen() {
           {item.attendees_count} attending
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color="#64748B" />
+      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
     </TouchableOpacity>
   );
 
@@ -163,7 +162,7 @@ export default function SearchScreen() {
     if (loading) {
       return (
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#6366F1" />
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       );
     }
@@ -171,7 +170,7 @@ export default function SearchScreen() {
     if (!hasSearched) {
       return (
         <View style={styles.centerContent}>
-          <Ionicons name="search-outline" size={64} color="#334155" />
+          <Ionicons name="search-outline" size={64} color={colors.border} />
           <Text style={styles.placeholderTitle}>Search Medious</Text>
           <Text style={styles.placeholderText}>
             Find users and events by typing in the search bar above
@@ -187,7 +186,7 @@ export default function SearchScreen() {
     if (!hasResults) {
       return (
         <View style={styles.centerContent}>
-          <Ionicons name="search-outline" size={64} color="#334155" />
+          <Ionicons name="search-outline" size={64} color={colors.border} />
           <Text style={styles.placeholderTitle}>No results found</Text>
           <Text style={styles.placeholderText}>
             Try different keywords or filters
@@ -230,11 +229,11 @@ export default function SearchScreen() {
       {/* Search Header */}
       <View style={styles.header}>
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#64748B" />
+          <Ionicons name="search" size={20} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search users, events..."
-            placeholderTextColor="#64748B"
+            placeholderTextColor={colors.textMuted}
             value={query}
             onChangeText={setQuery}
             autoCapitalize="none"
@@ -242,7 +241,7 @@ export default function SearchScreen() {
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={clearSearch}>
-              <Ionicons name="close-circle" size={20} color="#64748B" />
+              <Ionicons name="close-circle" size={20} color={colors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -264,7 +263,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 16,
@@ -273,16 +272,18 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 48,
     gap: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#FFFFFF',
+    color: colors.text,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -294,18 +295,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   filterTabActive: {
-    backgroundColor: '#6366F1',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   filterTabText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: colors.textMuted,
   },
   filterTabTextActive: {
-    color: '#FFFFFF',
+    color: colors.textInverse,
   },
   centerContent: {
     flex: 1,
@@ -316,12 +320,12 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#E2E8F0',
+    color: colors.text,
     marginTop: 16,
   },
   placeholderText: {
     fontSize: 14,
-    color: '#64748B',
+    color: colors.textMuted,
     marginTop: 8,
     textAlign: 'center',
   },
@@ -331,16 +335,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: colors.textMuted,
     marginBottom: 12,
     textTransform: 'uppercase',
   },
   resultItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   avatar: {
     width: 48,
@@ -351,7 +357,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#334155',
+    backgroundColor: colors.backgroundAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -359,7 +365,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    backgroundColor: `${colors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -370,16 +376,16 @@ const styles = StyleSheet.create({
   resultName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: colors.text,
   },
   resultSubtext: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: colors.textMuted,
     marginTop: 2,
   },
   resultMeta: {
     fontSize: 12,
-    color: '#64748B',
+    color: colors.textMuted,
     marginTop: 4,
   },
   separator: {

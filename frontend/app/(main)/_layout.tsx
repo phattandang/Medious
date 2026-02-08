@@ -3,22 +3,9 @@ import { Platform, Pressable, View, ActivityIndicator, StyleSheet } from 'react-
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../contexts/AuthContext';
-
-// Brand palette (unique, modern, still “social”)
-const COLORS = {
-  bg: '#0B1220',          // deeper than your current header
-  surface: '#0F172A',     // cards/headers
-  glassBorder: '#22314A',
-  text: '#E5E7EB',
-  muted: '#94A3B8',
-  primary: '#7C3AED',     // violet (your indigo-ish vibe, slightly punchier)
-  primary2: '#22D3EE',    // cyan accent for “innovation” vibe (unique vs IG)
-  danger: '#FB7185',
-};
+import { colors } from '../../lib/theme';
 
 function CreateTabButton(props: BottomTabBarButtonProps) {
   const { ref, ...restProps } = props;
@@ -36,7 +23,7 @@ function CreateTabButton(props: BottomTabBarButtonProps) {
       })}
     >
       <LinearGradient
-        colors={[COLORS.primary, COLORS.primary2]}
+        colors={[colors.primary, colors.accent]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{
@@ -45,16 +32,14 @@ function CreateTabButton(props: BottomTabBarButtonProps) {
           borderRadius: 31,
           alignItems: 'center',
           justifyContent: 'center',
-          shadowColor: '#000',
-          shadowOpacity: 0.35,
+          shadowColor: colors.primary,
+          shadowOpacity: 0.4,
           shadowRadius: 12,
-          shadowOffset: { width: 0, height: 8 },
+          shadowOffset: { width: 0, height: 6 },
           elevation: 10,
-          borderWidth: 1,
-          borderColor: 'rgba(255,255,255,0.14)',
         }}
       >
-        <Ionicons name="add" size={30} color="#FFFFFF" />
+        <Ionicons name="add" size={30} color={colors.textInverse} />
       </LinearGradient>
     </Pressable>
   );
@@ -75,7 +60,7 @@ export default function MainLayout() {
   if (loading) {
     return (
       <View style={authStyles.container}>
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -84,7 +69,7 @@ export default function MainLayout() {
   if (!user) {
     return (
       <View style={authStyles.container}>
-        <ActivityIndicator size="large" color="#6366F1" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -92,15 +77,15 @@ export default function MainLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerStyle: { backgroundColor: COLORS.surface },
-        headerTintColor: COLORS.text,
+        headerStyle: { backgroundColor: colors.surface },
+        headerTintColor: colors.text,
         headerShadowVisible: false,
 
         tabBarShowLabel: false,
-        tabBarActiveTintColor: COLORS.text,
-        tabBarInactiveTintColor: COLORS.muted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
 
-        // “Floating pill” bar
+        // "Floating pill" bar - bright theme
         tabBarStyle: {
           position: 'absolute',
           left: 16,
@@ -108,25 +93,16 @@ export default function MainLayout() {
           bottom: Platform.select({ ios: 26, android: 18 }),
           height: Platform.select({ ios: 72, android: 68 }),
           borderRadius: 22,
-          backgroundColor: 'transparent', // we’ll render blur behind it
+          backgroundColor: colors.surface,
           borderTopWidth: 0,
-          overflow: 'hidden',
-          elevation: 0,
+          borderWidth: 1,
+          borderColor: colors.border,
+          shadowColor: '#000',
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
         },
-
-        tabBarBackground: () => (
-          <BlurView
-            intensity={35}
-            tint="dark"
-            style={{
-              flex: 1,
-              borderRadius: 22,
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.08)',
-              backgroundColor: 'rgba(15,23,42,0.55)',
-            }}
-          />
-        ),
 
         tabBarItemStyle: {
           borderRadius: 18,
@@ -141,19 +117,17 @@ export default function MainLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View style={{ alignItems: 'center', justifyContent: 'center' }}>
               <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
-              {/* subtle active indicator = “premium” feel */}
-              {focused ? (
+              {focused && (
                 <View
                   style={{
                     marginTop: 6,
                     width: 18,
                     height: 3,
                     borderRadius: 2,
-                    backgroundColor: COLORS.primary2,
-                    opacity: 0.9,
+                    backgroundColor: colors.accent,
                   }}
                 />
-              ) : null}
+              )}
             </View>
           ),
         }}
@@ -208,8 +182,8 @@ export default function MainLayout() {
 const authStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
-}); 
+});

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator, StyleSheet, Text } from 'react-native';
+import { colors } from '../../lib/theme';
 
 interface LoadingFooterProps {
   loading: boolean;
@@ -15,7 +16,7 @@ export function LoadingFooter({
   if (loading) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="small" color="#6366F1" />
+        <ActivityIndicator size="small" color={colors.primary} />
       </View>
     );
   }
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   noMoreText: {
-    color: '#64748B',
+    color: colors.textMuted,
     fontSize: 14,
   },
 });
