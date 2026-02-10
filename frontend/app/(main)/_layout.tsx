@@ -14,7 +14,7 @@ function CreateTabButton(props: BottomTabBarButtonProps) {
       {...restProps}
       style={({ pressed }) => ({
         top: -18,
-        alignItems: 'center',
+        alignItems: 'center', 
         justifyContent: 'center',
         width: 62,
         height: 62,

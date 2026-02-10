@@ -80,8 +80,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Create redirect URI for OAuth
   const redirectUri = makeRedirectUri({
     scheme: 'medious',
-    path: 'auth/callback',
   });
+
+  // Log the redirect URI prominently
+  console.log('='.repeat(60));
+  console.log('📱 OAUTH REDIRECT URI:', redirectUri);
+  console.log('Add this EXACT URL to Supabase > Auth > URL Configuration > Redirect URLs');
+  console.log('='.repeat(60));
 
   // Load stored token on app start
   useEffect(() => {
@@ -242,9 +247,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Starting Google OAuth with redirect URI:', redirectUri);
-      
-      // Use Supabase's signInWithOAuth with proper redirect handling for Expo
+      console.log('🔑 Starting Google OAuth...');
+      console.log('📱 Redirect URI:', redirectUri);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -254,60 +259,95 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.error('Supabase OAuth error:', error);
-        throw error;
+        console.error('❌ Supabase OAuth error:', error);
+        throw new Error(
+          'Google OAuth is not configured. Please enable Google provider in Supabase Dashboard > Authentication > Providers > Google.'
+        );
       }
 
-      if (data?.url) {
-        // Open the OAuth URL in a web browser
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUri,
-          {
-            showInRecents: true,
-          }
-        );
+      if (!data?.url) {
+        throw new Error('Failed to generate OAuth URL. Is Google provider enabled in Supabase?');
+      }
 
-        console.log('WebBrowser result:', result);
+      console.log('🌐 Opening OAuth URL:', data.url);
 
-        if (result.type === 'success' && result.url) {
-          // Extract the tokens from the URL
-          const url = new URL(result.url);
-          const params = new URLSearchParams(url.hash.slice(1)); // Remove the # and parse
-          
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUri,
+        { showInRecents: true }
+      );
 
-          if (accessToken) {
-            // Set the session in Supabase
-            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            });
+      console.log('📲 WebBrowser result:', result.type);
+
+      if (result.type === 'success' && result.url) {
+        console.log('✅ OAuth callback received, URL:', result.url);
+
+        // Parse tokens - handle both hash fragment (#) and query params (?)
+        const callbackUrl = new URL(result.url);
+        let accessToken: string | null = null;
+        let refreshToken: string | null = null;
+
+        // Try hash fragment first (implicit flow)
+        if (callbackUrl.hash) {
+          const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+          accessToken = hashParams.get('access_token');
+          refreshToken = hashParams.get('refresh_token');
+        }
+
+        // Try query params (PKCE flow returns code)
+        if (!accessToken) {
+          const code = callbackUrl.searchParams.get('code');
+          if (code) {
+            console.log('🔄 Exchanging PKCE code for session...');
+            const { data: sessionData, error: sessionError } =
+              await supabase.auth.exchangeCodeForSession(code);
 
             if (sessionError) {
-              console.error('Session error:', sessionError);
+              console.error('❌ Code exchange error:', sessionError);
               throw sessionError;
             }
 
             if (sessionData.user) {
+              console.log('👤 Syncing user to backend...');
               await syncSupabaseUser(sessionData.user, 'google');
             }
+            return;
           }
-        } else if (result.type === 'cancel') {
-          throw new Error('Google sign-in was cancelled');
         }
+
+        if (accessToken) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+
+          if (sessionError) {
+            console.error('❌ Session error:', sessionError);
+            throw sessionError;
+          }
+
+          if (sessionData.user) {
+            console.log('👤 Syncing user to backend...');
+            await syncSupabaseUser(sessionData.user, 'google');
+          }
+        } else {
+          console.error('❌ No access token or code in callback URL');
+          throw new Error('Authentication failed - no credentials received');
+        }
+      } else if (result.type === 'cancel' || result.type === 'dismiss') {
+        throw new Error('Google sign-in was cancelled');
       }
     } catch (error: any) {
-      console.error('Google sign-in error:', error);
+      console.error('❌ Google sign-in error:', error);
       throw new Error(error.message || 'Google sign-in failed');
     }
   };
 
   const signInWithApple = async () => {
     try {
-      console.log('Starting Apple OAuth with redirect URI:', redirectUri);
-      
+      console.log('🍎 Starting Apple OAuth...');
+      console.log('📱 Redirect URI:', redirectUri);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
@@ -317,49 +357,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        console.error('Supabase Apple OAuth error:', error);
+        console.error('❌ Supabase Apple OAuth error:', error);
         throw error;
       }
 
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUri,
-          {
-            showInRecents: true,
-          }
-        );
+      if (!data?.url) {
+        throw new Error('Failed to generate Apple OAuth URL.');
+      }
 
-        console.log('WebBrowser Apple result:', result);
+      const result = await WebBrowser.openAuthSessionAsync(
+        data.url,
+        redirectUri,
+        { showInRecents: true }
+      );
 
-        if (result.type === 'success' && result.url) {
-          const url = new URL(result.url);
-          const params = new URLSearchParams(url.hash.slice(1));
-          
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
+      if (result.type === 'success' && result.url) {
+        const callbackUrl = new URL(result.url);
+        let accessToken: string | null = null;
+        let refreshToken: string | null = null;
 
-          if (accessToken) {
-            const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-              access_token: accessToken,
-              refresh_token: refreshToken || '',
-            });
+        if (callbackUrl.hash) {
+          const hashParams = new URLSearchParams(callbackUrl.hash.slice(1));
+          accessToken = hashParams.get('access_token');
+          refreshToken = hashParams.get('refresh_token');
+        }
 
-            if (sessionError) {
-              console.error('Apple session error:', sessionError);
-              throw sessionError;
-            }
-
+        if (!accessToken) {
+          const code = callbackUrl.searchParams.get('code');
+          if (code) {
+            const { data: sessionData, error: sessionError } =
+              await supabase.auth.exchangeCodeForSession(code);
+            if (sessionError) throw sessionError;
             if (sessionData.user) {
               await syncSupabaseUser(sessionData.user, 'apple');
             }
+            return;
           }
-        } else if (result.type === 'cancel') {
-          throw new Error('Apple sign-in was cancelled');
         }
+
+        if (accessToken) {
+          const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken || '',
+          });
+          if (sessionError) throw sessionError;
+          if (sessionData.user) {
+            await syncSupabaseUser(sessionData.user, 'apple');
+          }
+        }
+      } else if (result.type === 'cancel' || result.type === 'dismiss') {
+        throw new Error('Apple sign-in was cancelled');
       }
     } catch (error: any) {
-      console.error('Apple sign-in error:', error);
+      console.error('❌ Apple sign-in error:', error);
       throw new Error(error.message || 'Apple sign-in failed');
     }
   };
