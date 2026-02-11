@@ -3,7 +3,6 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import Constants from 'expo-constants';
-import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 
@@ -255,6 +254,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         options: {
           redirectTo: redirectUri,
           skipBrowserRedirect: true,
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
 

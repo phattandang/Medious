@@ -442,7 +442,25 @@ async def supabase_sync(sync_data: SupabaseSyncRequest):
     
     email_exists = await db.users.find_one({"email": sync_data.email})
     if email_exists:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        # Link the OAuth account to the existing user
+        await db.users.update_one(
+            {"_id": email_exists["_id"]},
+            {"$set": {
+                "supabase_user_id": sync_data.supabase_user_id,
+                "auth_provider": sync_data.auth_provider,
+                "avatar": sync_data.avatar or email_exists.get("avatar"),
+                "name": sync_data.name or email_exists.get("name"),
+                "updated_at": datetime.now(timezone.utc),
+            }}
+        )
+        email_exists["supabase_user_id"] = sync_data.supabase_user_id
+        email_exists["auth_provider"] = sync_data.auth_provider
+        token = create_access_token({"user_id": str(email_exists["_id"])})
+        user_dict = await user_to_dict(email_exists)
+        return AuthResponse(
+            token=token,
+            user=UserResponse(**user_dict, auth_provider=sync_data.auth_provider, created_at=email_exists["created_at"])
+        )
     
     new_user = {
         "email": sync_data.email,

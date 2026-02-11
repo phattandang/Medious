@@ -46,6 +46,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signInWithGoogle();
+      router.replace('/(main)/feed');
     } catch (error: any) {
       Alert.alert('Google Login Failed', error.message);
     } finally {
@@ -57,6 +58,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signInWithApple();
+      router.replace('/(main)/feed');
     } catch (error: any) {
       Alert.alert('Apple Login Failed', error.message);
     } finally {
