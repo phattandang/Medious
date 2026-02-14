@@ -57,6 +57,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   forgotPassword: (email: string) => Promise<void>;
   resetPassword: (email: string, resetToken: string, newPassword: string) => Promise<void>;
 }
@@ -468,6 +469,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async () => {
+    if (token) {
+      await verifyToken(token);
+    }
+  };
+
   const forgotPassword = async (email: string) => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
@@ -530,6 +537,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signInWithGoogle,
         signInWithApple,
         signOut,
+        refreshUser,
         forgotPassword,
         resetPassword,
       }}

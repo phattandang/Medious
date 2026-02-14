@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,16 +7,94 @@ import {
   TouchableOpacity,
   Alert,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../../contexts/AuthContext';
+import { usersApi } from '../../lib/api';
+import { uploadImage } from '../../lib/storage';
 import { colors } from '../../lib/theme';
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, token, signOut, refreshUser } = useAuth();
   const router = useRouter();
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
+  const handleChangeAvatar = () => {
+    Alert.alert('Change Profile Picture', 'Choose a source', [
+      { text: 'Camera', onPress: takePhoto },
+      { text: 'Photo Library', onPress: pickFromGallery },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const pickFromGallery = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await updateAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Gallery picker error:', error);
+      Alert.alert('Error', 'Failed to pick photo.');
+    }
+  };
+
+  const takePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Please allow access to your camera.');
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        await updateAvatar(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error('Camera error:', error);
+      Alert.alert('Error', 'Failed to take photo.');
+    }
+  };
+
+  const updateAvatar = async (uri: string) => {
+    if (!token) return;
+
+    try {
+      setUploadingAvatar(true);
+      const { url } = await uploadImage(uri, 'avatars');
+      await usersApi.updateProfile(token, { avatar: url });
+      await refreshUser();
+      Alert.alert('Success', 'Profile picture updated!');
+    } catch (error: any) {
+      console.error('Avatar update error:', error);
+      Alert.alert('Error', error.message || 'Failed to update profile picture.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -41,7 +119,11 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Profile Header */}
         <View style={styles.profileHeader}>
-          <View style={styles.avatarContainer}>
+          <TouchableOpacity
+            style={styles.avatarContainer}
+            onPress={handleChangeAvatar}
+            disabled={uploadingAvatar}
+          >
             {user?.avatar ? (
               <Image source={{ uri: user.avatar }} style={styles.avatar} />
             ) : (
@@ -49,7 +131,16 @@ export default function ProfileScreen() {
                 <Ionicons name="person" size={48} color={colors.primary} />
               </View>
             )}
-          </View>
+            {uploadingAvatar ? (
+              <View style={styles.avatarOverlay}>
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              </View>
+            ) : (
+              <View style={styles.cameraButton}>
+                <Ionicons name="camera" size={14} color={colors.textInverse} />
+              </View>
+            )}
+          </TouchableOpacity>
           <Text style={styles.name}>{user?.name}</Text>
           <Text style={styles.email}>{user?.email}</Text>
         </View>
@@ -132,6 +223,7 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     marginBottom: 16,
+    position: 'relative',
   },
   avatar: {
     width: 100,
@@ -145,6 +237,30 @@ const styles = StyleSheet.create({
     backgroundColor: `${colors.primary}15`,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 50,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.background,
   },
   name: {
     fontSize: 24,

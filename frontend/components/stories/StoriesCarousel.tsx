@@ -35,7 +35,13 @@ export function StoriesCarousel({
   const renderAddStoryButton = () => (
     <TouchableOpacity
       style={styles.storyItem}
-      onPress={onAddStoryPress}
+      onPress={() => {
+        if (currentUserStories && currentUserStories.stories.length > 0) {
+          onStoryPress(currentUserStories.user.id);
+        } else {
+          onAddStoryPress();
+        }
+      }}
       activeOpacity={0.7}
     >
       <View style={styles.addStoryContainer}>

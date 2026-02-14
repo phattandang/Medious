@@ -190,13 +190,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingTop: 20,
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
   },
   title: {
     fontSize: 18,
@@ -205,10 +206,10 @@ const styles = StyleSheet.create({
   },
   postButton: {
     backgroundColor: colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     borderRadius: 20,
-    minWidth: 70,
+    minWidth: 76,
     alignItems: 'center',
   },
   postButtonDisabled: {
